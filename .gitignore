@@ -4,4 +4,5 @@ simulation/etc/
 simulation/share/
 simulation/bin/
 simulation/pip-selfcheck.json
-pyvenv.cfg
+simulation/pyvenv.cfg
+notepad.md
