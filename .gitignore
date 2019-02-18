@@ -3,6 +3,7 @@ simulation/lib/
 simulation/etc/
 simulation/share/
 simulation/bin/
+simulation/include/
 simulation/pip-selfcheck.json
 simulation/pyvenv.cfg
 notepad.md
