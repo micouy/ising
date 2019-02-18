@@ -1,0 +1,7 @@
+simulation/.Python
+simulation/lib/
+simulation/etc/
+simulation/share/
+simulation/bin/
+simulation/pip-selfcheck.json
+pyvenv.cfg
