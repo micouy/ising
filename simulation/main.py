@@ -15,17 +15,9 @@ FLIPS_PER_UPDATE = 250  # around SIZE^2
 UPDATES_PER_TEMPERATURE = 1000
 UPDATES_TO_SKIP = 300
 
-PRINT_RESULTS = False
-
 
 def generate_lattice():
     return np.random.choice([-1, 1], (SIZE, SIZE))
-
-
-def show_lattice(lattice):
-    print "\n".join(
-            ["".join(["##" if cell == -1 else " ." for cell in row]) for row in lattice]
-        )
 
 
 def random_cell():
@@ -124,9 +116,6 @@ def display_latest_results(
     avg_magnetization = calc_avg_magnetization(sum_magnetization, updates_passed)
 
     t = time() - t_start
-    print "Update #{}, T = {:.2f}, t = {:.2f}".format(updates_passed, T, t)
-    print "Fluctuations: {:.0f}".format(avg_fluctuation)
-    print "Magnetization: {:.2f}".format(avg_magnetization)
 
 
 def simulate(temperature_params, cycle_params, j_const):
@@ -137,26 +126,20 @@ def simulate(temperature_params, cycle_params, j_const):
 
     t = time()
     lattice = generate_lattice()
-    results = {}
+    records = {}
+    errors = []
 
     for T in temperature_steps(T_min, T_max):
-        # optinally we can generate a new lattice at each temperature step
-        # lattice = generate_lattice()
         sum_energy_sq = 0
         sum_energy = 0
         sum_magnetization = 0
+        sum_magnetization_sq = 0
 
         for u in range(updates_to_skip):
             update(j_const, max_flip_attempts, flips_per_update, T, lattice)
 
         for u in range(updates_per_temperature):
             updates_passed = u + 1
-
-            if updates_passed % 100 == 0 and PRINT_RESULTS:
-                # show_lattice(lattice)
-                display_latest_results(
-                    sum_energy_sq, sum_energy, sum_magnetization, updates_passed, T, t
-                )
 
             update(j_const, max_flip_attempts, flips_per_update, T, lattice)
 
@@ -166,22 +149,42 @@ def simulate(temperature_params, cycle_params, j_const):
             sum_energy_sq += energy ** 2
             sum_energy += energy
             sum_magnetization += magnetization
+            sum_magnetization_sq += magnetization ** 2
 
-        results[T] = {
-            "fluctuations": calc_avg_fluctuation_at_T(
-                sum_energy_sq, sum_energy, updates_per_temperature, T
-            ),
+        fluctuations = calc_avg_fluctuation_at_T(
+            sum_energy_sq, sum_energy, updates_per_temperature, T
+        )
+
+        if fluctuations < 0:
+            errors.append({
+                "T": T,
+                "sum_energy_sq": sum_energy_sq,
+                "sum_energy": sum_energy,
+            })
+
+        records[T] = {
+            "fluctuations": fluctuations,
             "magnetization": calc_avg_magnetization(
                 sum_magnetization, updates_per_temperature
             ),
+            "mag-susceptibility": calc_magnetization_susceptibility(
+                sum_magnetization_sq, sum_magnetization
+            ),
         }
 
-    return results
+    return (records, errors)
 
 
-def compose_filename():
+def compose_results_file_path():
     date = datetime.datetime.now().strftime("%d-%m-%Y-%H:%M")
     filename = "results/results-{date}.txt".format(date=date)
+
+    return filename
+
+
+def compose_errors_file_path():
+    date = datetime.datetime.now().strftime("%d-%m-%Y-%H:%M")
+    filename = "errors/errors-{date}.txt".format(date=date)
 
     return filename
 
@@ -189,23 +192,40 @@ def compose_filename():
 def format_record(record):
     T, data = record
 
-    return "{:>15.2f}{:>20.0f}{:>15.2f}".format(T, data["fluctuations"], data["magnetization"])
+    return "{:>15.2f}{:>20.0f}{:>15.2f}{:>25.2f}".format(
+        T, data["fluctuations"], data["magnetization"], data["mag-susceptibility"]
+    )
+
 
 def format_d_t(d_t):
-    return "{:02d}:{:02d}".format(int(math.floor(d_t.seconds / 3600)), d_t.seconds % 3600)
+    hours, r = divmod(d_t.seconds, 3600)
+    minutes, seconds = divmod(r, 60)
 
-def save_results(results, d_t):
-    print results
+    return "{:02d}:{:02d}:{:02d}".format(hours, minutes, seconds)
 
-    filename = compose_filename()
 
-    with open(filename, "w+") as f:
-        headers = "{:>15}{:>20}{:>15}".format("temperature", "fluctuations", "magnetization")
-        records = map(format_record, results.items())
-        contents = "\n".join(records)
-        d_t = format_d_t(d_t)
+def compose_results(records, d_t):
+    headers = "{:>15}{:>20}{:>15}{:>25}".format(
+        "temperature", "fluctuations", "magnetization", "mag. susceptibility"
+    )
+    records = map(format_record, sorted(records.items(), key=lambda record: record[0]))
+    contents = "\n".join(records)
+    d_t = format_d_t(d_t)
 
-        f.write("{headers}\n{contents}\n\ntime: {d_t}".format(headers=headers, contents=contents, d_t=d_t))
+    return "{headers}\n{contents}\n\ntime: {d_t}".format(
+        headers=headers, contents=contents, d_t=d_t
+    )
+
+
+def format_error(error):
+    return "{:>15.2f}{:>20.0f}{:>15.2f}".format(error[0], error[1], error[2])
+
+
+def compose_errors(errors):
+    headers = "{:>15}{:>20}{:>15}".format("temperature", "sum_energy_sq", "sum_energy")
+    contents = "\n".join([format_error(error) for error in errors])
+
+    return "{headers}\n{contents}\n".format(headers=headers, contents=contents)
 
 
 def main():
@@ -221,12 +241,19 @@ def main():
 
     t_1 = datetime.datetime.now()
 
-    results = simulate(temperature_params, cycle_params, J)
+    records, errors = simulate(temperature_params, cycle_params, J)
 
     t_2 = datetime.datetime.now()
     d_t = t_2 - t_1
 
-    save_results(results, d_t)
+    with open(compose_results_file_path(), "w+") as f:
+        results = compose_results(records, d_t)
+        f.write(results)
+
+    if len(errors) > 0:
+        with open(compose_errors_file_path(), "w+") as f:
+            errors = compose_errors(errors)
+            f.write(errors)
 
 
 main()
