@@ -8,3 +8,4 @@ simulation/pip-selfcheck.json
 simulation/pyvenv.cfg
 notepad.md
 **/.DS_Store
+**/*.pyc
