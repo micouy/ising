@@ -155,8 +155,8 @@ def calc_fluctuations(state):
     n_steps = state.counter.steps_per_temperature
     T = state.counter.temperature()
 
-    avg_energy_sq = measurements.sum_energy_sq / n_steps
-    avg_energy = measurements.sum_energy / n_steps
+    avg_energy_sq = float(measurements.sum_energy_sq) / n_steps
+    avg_energy = float(measurements.sum_energy) / n_steps
 
     return (avg_energy_sq - avg_energy ** 2) / T
 
@@ -291,7 +291,7 @@ def format_record(record):
     )
 
 
-def compose_results(records, d_t):
+def compose_results(records, d_t, params):
     headers = "{:>5}{:>15}{:>15}{:>20}{:>15}{:>15}".format(
         "T",
         "fluctuations",
@@ -302,9 +302,10 @@ def compose_results(records, d_t):
     )
     contents = "\n".join([format_record(record) for record in records])
     d_t = format_d_t(d_t)
+    params = "\n".join(["{}: {}".format(k, v) for (k, v) in params.items()])
 
-    return "{headers}\n{contents}\n\ntime: {d_t}\n".format(
-        headers=headers, contents=contents, d_t=d_t
+    return "{headers}\n{contents}\n\ntime: {d_t}\n{params}".format(
+        headers=headers, contents=contents, d_t=d_t, params=params
     )
 
 
