@@ -1,4 +1,5 @@
-use crate::*;
+use ::ndarray::prelude::*;
+use ::rand::prelude::*;
 
 #[derive(Debug)]
 enum LatticeCreationError {
@@ -41,6 +42,8 @@ impl Lattice {
 
 #[cfg(test)]
 mod test {
+    use ::pretty_assertions::assert_eq;
+
     use super::*;
 
     #[test]
@@ -61,7 +64,10 @@ mod test {
         let lattice = Lattice::try_from_array(t_array).unwrap();
 
         assert_eq!(lattice.size(), t_size);
+    }
 
+    #[test]
+    fn test_error_on_create_lattice_from_invalid_array() {
         let t_invalid_spin_array = Array::from_shape_vec(
             (2, 2),
             vec![5, -1, 1, -1]
