@@ -23,14 +23,14 @@ impl Lattice {
         Self { size, inner }
     }
 
-    /// Create a new `Lattice` from `Array2<i8>`.
+    /// Create a new [`Lattice`] from [`Array2<i8>`][ndarray::Array2].
     ///
     /// # Examples
     ///
     /// ```
     /// # fn main() -> Result<(), Box<std::error::Error>> {
     /// # use ::ndarray::prelude::*;
-    /// # use ising_lib::Lattice;
+    /// # use ising_lib::prelude::*;
     /// let array = Array::from_shape_vec((2, 2), vec![1, -1, 1, -1])?;
     /// let lattice = Lattice::from_array(array);
     /// # Ok(())
@@ -40,14 +40,15 @@ impl Lattice {
     /// # Panics
     ///
     /// The function **must** panic if `array` is not
-    /// [`square`][ndarray::ArrayBase::is_square] or if any of the spins is neither `-1` nor `1`.
+    /// [`square`][ndarray::ArrayBase::is_square] or if any of the spins
+    /// has incorrect value (neither `-1` nor `1`).
     ///
     /// ```should_panic
     /// # fn main() -> Result<(), Box<std::error::Error>> {
     /// # use ::ndarray::prelude::*;
-    /// # use ising_lib::Lattice;
-    /// //                                             ↓ incorrect spin value
+    /// # use ising_lib::prelude::*;
     /// let array = Array::from_shape_vec((2, 2), vec![5, -1, 1, -1])?;
+    ///                                             // ↑ incorrect spin value
     /// let lattice = Lattice::from_array(array);
     /// # Ok(())
     /// # }
@@ -56,9 +57,9 @@ impl Lattice {
     /// ```should_panic
     /// # fn main() -> Result<(), Box<std::error::Error>> {
     /// # use ::ndarray::prelude::*;
-    /// # use ising_lib::Lattice;
-    /// //                                 ↓  ↓ array isn't square
+    /// # use ising_lib::prelude::*;
     /// let array = Array::from_shape_vec((1, 4), vec![1, 1, 1, 1])?;
+    ///                                 // ↑  ↑ array isn't square
     /// let lattice = Lattice::from_array(array);
     /// # Ok(())
     /// # }
@@ -109,10 +110,12 @@ impl Lattice {
             .sum()
     }
 
-    /// Calculate the energy difference the flip of the spin would cause.
+    /// Calculate the difference of energy that would be caused by
+    /// flipping the `(ith, jth)` spin without actually doing it.
     /// Used to determine the probability of a flip.
     ///
-    /// Lattice before:          Lattice after:
+    /// ```text
+    /// Lattice before flip:     Lattice after flip:
     /// ##| a|##                 ##| a|##
     /// --------                 --------
     ///  b| S| c                  b|-S| c
@@ -124,12 +127,14 @@ impl Lattice {
     ///  = -J * (a + b + c + d) * ((-S) - S) =
     ///  = -2 * -J * (a + b + c + d) * S =
     ///  = 2 * J * S * (a + b + c + d)
-    fn calc_dE(&self, (i, j): (usize, usize), J: f32) -> f32 {
+    /// ```
+    pub fn calc_dE(&self, (i, j): (usize, usize), J: f32) -> f32 {
         assert!(i < self.size && j < self.size, "Index out of bounds.");
 
         2.0 * J * ((self.inner[(i, j)] * self.sum_all_neighbors((i, j))) as f32)
     }
 
+    /// Caluclate lattice's energy.
     fn calc_E(&self, J: f32) -> f32 {
         self.inner
             .indexed_iter()
