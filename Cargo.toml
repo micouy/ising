@@ -10,7 +10,7 @@ rand = "^0.6"
 pretty_assertions = "*"
 
 [lib]
-name = "ising_lib"
+name = "ising"
 path = "src/lib.rs"
 
 [[bin]]
