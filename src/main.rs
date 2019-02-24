@@ -1,3 +1,3 @@
-mod lattice;
+use ::ising_lib::*;
 
 fn main() {}
