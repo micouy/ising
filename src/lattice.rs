@@ -25,10 +25,44 @@ impl Lattice {
 
     /// Create a new `Lattice` from `Array2<i8>`.
     ///
+    /// # Examples
+    ///
+    /// ```
+    /// # fn main() -> Result<(), Box<std::error::Error>> {
+    /// # use ::ndarray::prelude::*;
+    /// # use ising_lib::Lattice;
+    /// let array = Array::from_shape_vec((2, 2), vec![1, -1, 1, -1])?;
+    /// let lattice = Lattice::from_array(array);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
     /// # Panics
-    /// The function panics in two cases: if `array` is not
-    /// [`square`][ndarray::ArrayBase::is_square] or if any of the spins
-    /// is neither `-1` nor `1`.
+    ///
+    /// The function **must** panic if `array` is not
+    /// [`square`][ndarray::ArrayBase::is_square] or if any of the spins is neither `-1` nor `1`.
+    ///
+    /// ```should_panic
+    /// # fn main() -> Result<(), Box<std::error::Error>> {
+    /// # use ::ndarray::prelude::*;
+    /// # use ising_lib::Lattice;
+    /// //                                             ↓ incorrect spin value
+    /// let array = Array::from_shape_vec((2, 2), vec![5, -1, 1, -1])?;
+    /// let lattice = Lattice::from_array(array);
+    /// # Ok(())
+    /// # }
+    /// ```
+    ///
+    /// ```should_panic
+    /// # fn main() -> Result<(), Box<std::error::Error>> {
+    /// # use ::ndarray::prelude::*;
+    /// # use ising_lib::Lattice;
+    /// //                                 ↓  ↓ array isn't square
+    /// let array = Array::from_shape_vec((1, 4), vec![1, 1, 1, 1])?;
+    /// let lattice = Lattice::from_array(array);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub fn from_array(array: Array2<i8>) -> Self {
         assert!(array.is_square(), "Array is not square.");
         assert!(
