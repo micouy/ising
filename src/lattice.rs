@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 use ::ndarray::prelude::*;
 use ::rand::prelude::*;
 
@@ -37,6 +39,40 @@ impl Lattice {
 
     fn size(&self) -> usize {
         self.size
+    }
+
+    /// Calculate the energy difference the flip of the spin would cause.
+    ///
+    /// Lattice before:          Lattice after:
+    /// ##| a|##                 ##| a|##
+    /// --------                 --------
+    ///  b| S| c                  b|-S| c
+    /// --------                 --------
+    /// ##| d|##                 ##| d|##
+    ///
+    /// d_E = E_2 - E_1 =
+    ///  = ((-J) * (-S) * (a + b + c + d)) - ((-J) * S * (a + b + c + d)) =
+    ///  = -J * (a + b + c + d) * ((-S) - S) =
+    ///  = -2 * -J * (a + b + c + d) * S =
+    ///  = 2 * J * S * (a + b + c + d)
+    fn calc_dE(&self, (i, j): (usize, usize), J: f32) -> f32 {
+        assert!(i < self.size && j < self.size, "Index out of bounds.");
+
+        let neighbours = [
+            ((i + 1) % self.size, j),
+            ((i - 1) % self.size, j),
+            (i, (j + 1) % self.size),
+            (i, (j + 1) % self.size),
+        ];
+
+        let neighbours_sum = neighbours
+            .iter()
+            .map(|ix| self.inner[*ix])
+            .fold(0, |sum, n| sum + n);
+
+        let s = self.inner[(i, j)];
+
+        2.0 * J * ((s * neighbours_sum) as f32)
     }
 }
 
@@ -83,5 +119,23 @@ mod test {
         let result = Lattice::try_from_array(t_invalid_dimensions_array);
 
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_calculate_cells_dE() {
+        let t_array = Array::from_shape_vec(
+            (3, 3),
+            vec![
+                -1, -1,  1,
+                 1,  1,  1,
+                -1,  1,  1,
+            ]
+        ).unwrap();
+        let lattice = Lattice::try_from_array(t_array).unwrap();
+        let J = 1.0;
+        let dE = lattice.calc_dE((1, 1), J);
+        let t_dE = 2.0 * J * 1 as f32 * (-1 + 1 + 1 + 1) as f32;
+
+        assert_eq!(dE, t_dE);
     }
 }
