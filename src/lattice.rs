@@ -6,8 +6,8 @@ use ::rand::prelude::*;
 
 /// Struct encapsulating the spin lattice and operations on it.
 ///
-/// The lattice behaves like
-/// a torus - spins on the opposite edges are considered each other's neighbors.
+/// The lattice behaves like a torus - spins on the opposite edges are
+/// considered each other's neighbors.
 pub struct Lattice {
     size: usize,
     inner: Array2<i8>,
@@ -85,37 +85,44 @@ impl Lattice {
         self.size
     }
 
+    /// Returns the `(ith, jth)` spin value.
     fn get(&self, ix: (usize, usize)) -> i8 {
         self.inner[ix]
     }
 
-    fn roll_index(&self, ix: usize, amt: isize) -> usize {
+    /// Returns the modulo operation on the `index + amt`, so that it stays
+    /// within the bounds.
+    fn roll_index(&self, (i, j): (usize, usize), amt: isize) -> (usize, usize) {
         let size = self.size as isize;
 
-        ((ix as isize + size + amt) % size) as usize
+        (
+            ((i as isize + size + amt) % size) as usize,
+            ((j as isize + size + amt) % size) as usize,
+        )
     }
 
+    /// Returns the product of the `(ith, jth)` spin and the sum of all of its
+    /// neighbors.
     fn spin_times_all_neighbors(&self, (i, j): (usize, usize)) -> i8 {
         assert!(i < self.size && j < self.size);
 
-        [
-            (self.roll_index(i, 1), j),
-            (self.roll_index(i, -1), j),
-            (i, self.roll_index(j, 1)),
-            (i, self.roll_index(j, -1)),
-        ]
-        .iter()
-        .map(|ix| self.inner[*ix])
-        .sum()
-    }
+        let (i_1, j_1) = self.roll_index((i, j), -1);
+        let (i_2, j_2) = self.roll_index((i, j), 1);
 
-    fn spin_times_two_neighbors(&self, (i, j): (usize, usize)) -> i8 {
-        assert!(i < self.size && j < self.size);
-
-        [(self.roll_index(i, 1), j), (i, self.roll_index(j, 1))]
+        [(i_1, j), (i_2, j), (i, j_1), (i, j_2)]
             .iter()
             .map(|ix| self.inner[*ix])
             .sum()
+    }
+
+    /// Returns the product of the `(ith, jth)` spin and the sum of two of its
+    /// neighbors.
+    fn spin_times_two_neighbors(&self, (i, j): (usize, usize)) -> i8 {
+        assert!(i < self.size && j < self.size);
+
+        let (i_r, j_r) = self.roll_index((i, j), 1);
+
+        [(i_r, j), (i, j_r)].iter().map(|ix| self.inner[*ix]).sum()
     }
 
     /// Calculates the difference of energy that would be caused by
@@ -190,9 +197,8 @@ mod test {
 
     #[test]
     fn test_create_lattice_from_array() {
-        let t_array =
-            Array::from_shape_vec((2, 2), vec![1, -1, 1, -1]).unwrap();
-        let lattice = Lattice::from_array(t_array);
+        let array = Array::from_shape_vec((2, 2), vec![1, -1, 1, -1]).unwrap();
+        let lattice = Lattice::from_array(array);
 
         assert_eq!(lattice.size(), 2);
     }
@@ -200,35 +206,31 @@ mod test {
     #[test]
     fn test_spin_times_neighbors() {
         let spins = [-1, -1, 1, 1, 1, 1, 1, 1, -1];
-        let t_array = Array::from_shape_vec((3, 3), spins.to_vec()).unwrap();
-        let lattice = Lattice::from_array(t_array);
+        let array = Array::from_shape_vec((3, 3), spins.to_vec()).unwrap();
+        let lattice = Lattice::from_array(array);
 
         let product = lattice.spin_times_all_neighbors((1, 1));
-        let t_product = (-1 + 1 + 1 + 1) * 1;
 
-        assert_eq!(product, t_product);
+        assert_eq!(product, 2);
     }
 
     #[test]
     fn test_calculate_dE() {
-        let t_array =
+        let array =
             Array::from_shape_vec((3, 3), vec![-1, -1, 1, 1, 1, 1, -1, 1, 1])
                 .unwrap();
-        let lattice = Lattice::from_array(t_array);
+        let lattice = Lattice::from_array(array);
         let J = 1.0;
 
         let dE = lattice.calc_dE((1, 1), J);
-        let t_dE =
-            2.0 * J * f32::from(lattice.spin_times_all_neighbors((1, 1)));
 
-        assert_eq!(dE, t_dE);
+        assert_eq!(dE, 4.0);
     }
 
     #[test]
     fn test_caluclate_E() {
-        let t_array =
-            Array::from_shape_vec((2, 2), vec![-1, -1, 1, 1]).unwrap();
-        let lattice = Lattice::from_array(t_array);
+        let array = Array::from_shape_vec((2, 2), vec![-1, -1, 1, 1]).unwrap();
+        let lattice = Lattice::from_array(array);
         let J = 1.0;
 
         let E = lattice.calc_E(J);
@@ -238,25 +240,21 @@ mod test {
 
     #[test]
     fn test_calculate_I() {
-        let t_array =
-            Array::from_shape_vec((2, 2), vec![-1, -1, -1, 1]).unwrap();
-        let lattice = Lattice::from_array(t_array);
+        let array = Array::from_shape_vec((2, 2), vec![-1, -1, -1, 1]).unwrap();
+        let lattice = Lattice::from_array(array);
 
         let I = lattice.calc_I();
-        let t_I = (-1_i8 + -1 + -1 + 1).abs() as f32 / 4.0;
 
-        assert_eq!(I, t_I);
+        assert_eq!(I, 0.5);
     }
 
     #[test]
     fn test_flip_spin() {
-        let t_array =
-            Array::from_shape_vec((2, 2), vec![-1, -1, -1, 1]).unwrap();
-        let mut lattice = Lattice::from_array(t_array);
+        let array = Array::from_shape_vec((2, 2), vec![-1, -1, -1, 1]).unwrap();
+        let mut lattice = Lattice::from_array(array);
 
         lattice.flip_spin((1, 1));
-        let spin = lattice.get((1, 1));
 
-        assert_eq!(spin, -1);
+        assert_eq!(lattice.get((1, 1)), -1);
     }
 }
