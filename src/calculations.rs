@@ -1,17 +1,17 @@
 //! Utilities for calculations and measurements.
 
-fn calc_fluctuations(Es: Vec<u64>) -> f64 {
+fn calc_fluctuations(Es: Vec<u64>, T: f64) -> f64 {
     let n = Es.len() as f64;
     let avg_E_sq = (Es.iter().fold(0, |sum, E| sum + E.pow(2)) as f64) / n;
     let avg_E = (Es.iter().fold(0, |sum, E| sum + E) as f64) / n;
 
-    avg_E_sq - avg_E.powi(2)
+    (avg_E_sq - avg_E.powi(2)) / T
 }
 
-fn calc_mag_susceptibility(Is: Vec<f32>) -> f32 {
-    let n = Is.len() as f32;
-    let avg_I_sq = (Is.iter().fold(0.0, |sum, I| sum + I.powi(2)) as f32) / n;
-    let avg_I = (Is.iter().fold(0.0, |sum, I| sum + I) as f32) / n;
+fn calc_mag_susceptibility(Is: Vec<f64>) -> f64 {
+    let n = Is.len() as f64;
+    let avg_I_sq = (Is.iter().fold(0.0, |sum, I| sum + I.powi(2)) as f64) / n;
+    let avg_I = (Is.iter().fold(0.0, |sum, I| sum + I) as f64) / n;
 
     avg_I_sq - avg_I.powi(2)
 }
@@ -28,10 +28,11 @@ mod test {
     #[test]
     fn test_calculate_fluctuations() {
         let Es = vec![3, 5, 10, 2];
+        let T = 0.5;
 
-        let fluctuations = calc_fluctuations(Es);
+        let fluctuations = calc_fluctuations(Es, T);
 
-        assert_eq!(fluctuations, 9.5);
+        assert!(float_error(fluctuations, 19.0) < 0.01);
     }
 
     #[test]
@@ -40,6 +41,6 @@ mod test {
 
         let mag_susceptibility = calc_mag_susceptibility(Is);
 
-        assert!(float_error(mag_susceptibility as f64, 0.05) < 0.01);
+        assert!(float_error(mag_susceptibility, 0.05) < 0.01);
     }
 }
