@@ -1,7 +1,7 @@
 //! Utilities for calculations and measurements.
 
-/// Calculates average energy fluctuation at the given temperature from a vector
-/// of energy levels.
+/// Calculates average energy fluctuation at the given temperature from a slice
+/// of energy values.
 pub fn calc_dE(Es: &[u64], T: f64) -> f64 {
     let n = Es.len() as f64;
     let avg_E_sq = (Es.iter().fold(0, |sum, E| sum + E.pow(2)) as f64) / n;
@@ -10,7 +10,7 @@ pub fn calc_dE(Es: &[u64], T: f64) -> f64 {
     (avg_E_sq - avg_E.powi(2)) / T
 }
 
-/// Calculates energy fluctuations from a vector of magnetization levels.
+/// Calculates energy fluctuations from an slice of magnetization values.
 pub fn calc_X(Is: &[f64]) -> f64 {
     let n = Is.len() as f64;
     let avg_I_sq = (Is.iter().fold(0.0, |sum, I| sum + I.powi(2)) as f64) / n;
