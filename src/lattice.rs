@@ -1,6 +1,5 @@
 //! Stuff related to spin lattice.
 
-#![allow(non_snake_case)]
 use ::ndarray::prelude::*;
 use ::rand::prelude::*;
 
