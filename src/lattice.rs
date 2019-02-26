@@ -9,6 +9,7 @@ use ::rand::prelude::*;
 /// considered each other's neighbors.
 pub struct Lattice {
     size: usize,
+    rng: ThreadRng,
     inner: Array2<i8>,
 }
 
@@ -22,7 +23,7 @@ impl Lattice {
             *spins[..].choose(&mut rng).unwrap()
         });
 
-        Self { size, inner }
+        Self { size, inner, rng }
     }
 
     /// Creates a new [`Lattice`] from [`Array2<i8>`][ndarray::Array2].
@@ -76,6 +77,7 @@ impl Lattice {
         Lattice {
             size: array.shape()[0],
             inner: array,
+            rng: thread_rng(),
         }
     }
 
@@ -124,7 +126,7 @@ impl Lattice {
         [(i_r, j), (i, j_r)].iter().map(|ix| self.inner[*ix]).sum()
     }
 
-    /// Calculates the difference of energy that would be caused by
+    /// Returns the difference of energy that would be caused by
     /// flipping the `(ith, jth)` spin without actually doing it.
     /// Used to determine the probability of a flip.
     ///
@@ -158,7 +160,7 @@ impl Lattice {
         2.0 * J * f32::from(self.spin_times_all_neighbors((i, j)))
     }
 
-    /// Calculates the energy of the lattice.
+    /// Returns the energy of the lattice.
     pub fn calc_E(&self, J: f32) -> f32 {
         self.inner
             .indexed_iter()
@@ -166,7 +168,7 @@ impl Lattice {
             .sum()
     }
 
-    /// Calculates the magnetization of the lattice. The magnetization is
+    /// Returns the magnetization of the lattice. The magnetization is
     /// a value in range `[0.0, 1.0]` and it is the absolute value of the mean
     /// spin value.
     pub fn calc_I(&self) -> f32 {
@@ -178,6 +180,14 @@ impl Lattice {
         assert!(i < self.size && j < self.size);
 
         *self.inner.get_mut((i, j)).unwrap() *= -1;
+    }
+
+    /// Returns a valid, randomly generated spin index.
+    pub fn random_index(&mut self) -> (usize, usize) {
+        (
+            self.rng.gen_range(0, self.size) as usize,
+            self.rng.gen_range(0, self.size) as usize,
+        )
     }
 }
 
