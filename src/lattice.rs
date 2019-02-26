@@ -3,14 +3,15 @@
 use ::ndarray::prelude::*;
 use ::rand::prelude::*;
 
-/// Struct encapsulating the spin lattice and operations on it.
+/// Struct which encapsulates the spin lattice and all the operations performed
+/// on it.
 ///
-/// The lattice behaves like a torus - spins on the opposite edges are
-/// considered each other's neighbors.
+/// The lattice behaves like a torus - spins on opposite edges are considered
+/// each other's neighbors.
 pub struct Lattice {
     size: usize,
     rng: ThreadRng,
-    inner: Array2<i8>,
+    inner: Array2<i32>,
 }
 
 impl Lattice {
@@ -18,7 +19,7 @@ impl Lattice {
     /// spins.
     pub fn new(size: usize) -> Self {
         let mut rng = thread_rng();
-        let spins: [i8; 2] = [-1, 1];
+        let spins: [i32; 2] = [-1, 1];
         let inner = Array2::from_shape_fn((size, size), |_| {
             *spins[..].choose(&mut rng).unwrap()
         });
@@ -26,7 +27,7 @@ impl Lattice {
         Self { size, inner, rng }
     }
 
-    /// Creates a new [`Lattice`] from [`Array2<i8>`][ndarray::Array2].
+    /// Creates a new [`Lattice`] from [`Array2<i32>`][ndarray::Array2].
     ///
     /// # Examples
     ///
@@ -67,7 +68,7 @@ impl Lattice {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn from_array(array: Array2<i8>) -> Self {
+    pub fn from_array(array: Array2<i32>) -> Self {
         assert!(array.is_square(), "Array is not square.");
         assert!(
             array.iter().all(|spin| *spin == 1 || *spin == -1),
@@ -86,11 +87,6 @@ impl Lattice {
         self.size
     }
 
-    /// Returns the `(ith, jth)` spin value.
-    fn get(&self, ix: (usize, usize)) -> i8 {
-        self.inner[ix]
-    }
-
     /// Returns the modulo operation on the `index + amt`, so that it stays
     /// within the bounds.
     fn roll_index(&self, (i, j): (usize, usize), amt: isize) -> (usize, usize) {
@@ -104,7 +100,7 @@ impl Lattice {
 
     /// Returns the product of the `(ith, jth)` spin and the sum of all of its
     /// neighbors.
-    fn spin_times_all_neighbors(&self, (i, j): (usize, usize)) -> i8 {
+    fn spin_times_all_neighbors(&self, (i, j): (usize, usize)) -> i32 {
         assert!(i < self.size && j < self.size);
 
         let (i_1, j_1) = self.roll_index((i, j), -1);
@@ -118,7 +114,7 @@ impl Lattice {
 
     /// Returns the product of the `(ith, jth)` spin and the sum of two of its
     /// neighbors.
-    fn spin_times_two_neighbors(&self, (i, j): (usize, usize)) -> i8 {
+    fn spin_times_two_neighbors(&self, (i, j): (usize, usize)) -> i32 {
         assert!(i < self.size && j < self.size);
 
         let (i_r, j_r) = self.roll_index((i, j), 1);
@@ -138,7 +134,7 @@ impl Lattice {
     /// --------                 --------
     /// ##| d|##                 ##| d|##
     ///
-    /// d_E = E_2 - E_1 =
+    /// E_2 - E_1 =
     ///  = ((-J) * (-s) * (a + b + c + d)) - ((-J) * s * (a + b + c + d)) =
     ///  = -J * (a + b + c + d) * ((-s) - s) =
     ///  = -2 * -J * (a + b + c + d) * s =
@@ -152,27 +148,27 @@ impl Lattice {
     /// ```should_panic
     /// # use ising_lib::prelude::*;
     /// let lattice = Lattice::new(10);
-    /// let _ = lattice.calc_dE((42, 0), 1.0);
+    /// let _ = lattice.calc_E_diff((42, 0), 1.0);
     /// ```
-    pub fn calc_dE(&self, (i, j): (usize, usize), J: f32) -> f32 {
+    pub fn calc_E_diff(&self, (i, j): (usize, usize), J: f64) -> f64 {
         assert!(i < self.size && j < self.size);
 
-        2.0 * J * f32::from(self.spin_times_all_neighbors((i, j)))
+        2.0 * J * f64::from(self.spin_times_all_neighbors((i, j)))
     }
 
     /// Returns the energy of the lattice.
-    pub fn calc_E(&self, J: f32) -> f32 {
+    pub fn calc_E(&self, J: f64) -> f64 {
         self.inner
             .indexed_iter()
-            .map(|(ix, _)| -J * f32::from(self.spin_times_two_neighbors(ix)))
+            .map(|(ix, _)| -J * f64::from(self.spin_times_two_neighbors(ix)))
             .sum()
     }
 
     /// Returns the magnetization of the lattice. The magnetization is
     /// a value in range `[0.0, 1.0]` and it is the absolute value of the mean
     /// spin value.
-    pub fn calc_I(&self) -> f32 {
-        f32::from(self.inner.sum().abs()) / self.size.pow(2) as f32
+    pub fn calc_I(&self) -> f64 {
+        f64::from(self.inner.sum().abs()) / self.size.pow(2) as f64
     }
 
     /// Flips the `(ith, jth)` spin.
@@ -196,6 +192,10 @@ mod test {
     use ::pretty_assertions::assert_eq;
 
     use super::*;
+
+    fn float_error(x: f64, t: f64) -> f64 {
+        (x - t).abs() / t
+    }
 
     #[test]
     fn test_create_lattice() {
@@ -224,16 +224,16 @@ mod test {
     }
 
     #[test]
-    fn test_calculate_dE() {
+    fn test_calculate_E_difference() {
         let array =
             Array::from_shape_vec((3, 3), vec![-1, -1, 1, 1, 1, 1, -1, 1, 1])
                 .unwrap();
         let lattice = Lattice::from_array(array);
         let J = 1.0;
 
-        let dE = lattice.calc_dE((1, 1), J);
+        let E_diff = lattice.calc_E_diff((1, 1), J);
 
-        assert_eq!(dE, 4.0);
+        assert_eq!(E_diff, 4.0);
     }
 
     #[test]
@@ -261,9 +261,15 @@ mod test {
     fn test_flip_spin() {
         let array = Array::from_shape_vec((2, 2), vec![-1, -1, -1, 1]).unwrap();
         let mut lattice = Lattice::from_array(array);
+        let J = 1.0;
+
+        let E_diff = lattice.calc_E_diff((1, 1), J);
+        let E_1 = lattice.calc_E(J);
 
         lattice.flip_spin((1, 1));
 
-        assert_eq!(lattice.get((1, 1)), -1);
+        let E_2 = lattice.calc_E(J);
+
+        assert!(float_error(E_2 - E_1, E_diff) < 0.01);
     }
 }
