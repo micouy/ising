@@ -183,21 +183,18 @@ mod test {
 
     #[test]
     fn test_create_lattice() {
-        let t_size = 40;
-        let lattice = Lattice::new(t_size);
+        let lattice = Lattice::new(40);
 
-        assert_eq!(lattice.size(), t_size);
+        assert_eq!(lattice.size(), 40);
     }
 
     #[test]
     fn test_create_lattice_from_array() {
-        let t_size = 2;
         let t_array =
-            Array::from_shape_vec((t_size, t_size), vec![1, -1, 1, -1])
-                .unwrap();
+            Array::from_shape_vec((2, 2), vec![1, -1, 1, -1]).unwrap();
         let lattice = Lattice::from_array(t_array);
 
-        assert_eq!(lattice.size(), t_size);
+        assert_eq!(lattice.size(), 2);
     }
 
     #[test]
@@ -219,6 +216,7 @@ mod test {
                 .unwrap();
         let lattice = Lattice::from_array(t_array);
         let J = 1.0;
+
         let dE = lattice.calc_dE((1, 1), J);
         let t_dE =
             2.0 * J * f32::from(lattice.spin_times_all_neighbors((1, 1)));
@@ -234,9 +232,8 @@ mod test {
         let J = 1.0;
 
         let E = lattice.calc_E(J);
-        let t_E = 0.0;
 
-        assert_eq!(E, t_E);
+        assert_eq!(E, 0.0);
     }
 
     #[test]
