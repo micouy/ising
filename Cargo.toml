@@ -9,6 +9,7 @@ ndarray = "^0.12"
 rand = "^0.6"
 pretty_assertions = "*"
 humantime = "^1.2"
+pbr = "*"
 
 [lib]
 name = "ising_lib"
