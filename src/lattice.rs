@@ -172,6 +172,10 @@ impl Lattice {
     }
 
     /// Flips the `(ith, jth)` spin.
+    ///
+    /// # Panics
+    ///
+    /// This function panics if the index is out of bounds.
     pub fn flip_spin(&mut self, (i, j): (usize, usize)) {
         assert!(i < self.size && j < self.size);
 
@@ -179,7 +183,7 @@ impl Lattice {
     }
 
     /// Returns a valid, randomly generated spin index.
-    pub fn random_index(&mut self) -> (usize, usize) {
+    pub fn gen_random_index(&mut self) -> (usize, usize) {
         (
             self.rng.gen_range(0, self.size) as usize,
             self.rng.gen_range(0, self.size) as usize,
