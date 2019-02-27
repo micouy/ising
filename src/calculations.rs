@@ -29,6 +29,48 @@ pub fn calc_flip_probability(E_diff: f64, K: f64, T: f64) -> f64 {
     }
 }
 
+/// An iterator over `n` equally spaced values within the range `[T_min,
+/// T_max]`.
+pub struct TRange {
+    T_min: f64,
+    T_max: f64,
+    step: f64,
+    counter: usize,
+}
+
+impl TRange {
+    /// Creates a new [`TRange`] with given parameters.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `T_min` is greater than or equal to `T_max`.
+    pub fn new(T_min: f64, T_max: f64, n: i32) -> Self {
+        assert!(T_min < T_max);
+
+        Self {
+            T_min,
+            T_max,
+            step: (T_max - T_min) / f64::from(n),
+            counter: 0,
+        }
+    }
+}
+
+impl Iterator for TRange {
+    type Item = f64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let T = self.T_min + self.step * self.counter as f64;
+        self.counter += 1;
+
+        if T <= self.T_max {
+            Some(T)
+        } else {
+            None
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use ::pretty_assertions::assert_eq;
@@ -72,5 +114,14 @@ mod test {
         let probability = calc_flip_probability(E_diff, k, T);
 
         assert!(float_error(probability, 0.37) < 0.01);
+    }
+
+    #[test]
+    fn test_generate_T_range() {
+        let (T_min, T_max) = (0.2, 0.7);
+        let n = 5;
+        let T_range = TRange::new(T_min, T_max, n).collect::<Vec<f64>>();
+
+        assert_eq!(T_range, vec![0.2, 0.3, 0.4, 0.5, 0.6, 0.7]);
     }
 }
