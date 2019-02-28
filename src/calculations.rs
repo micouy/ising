@@ -22,9 +22,17 @@ pub fn calc_X(Is: &[f64]) -> f64 {
 /// Calculates the probability of a flip based on the energy difference it would
 /// cause and the temperature.
 pub fn calc_flip_probability(E_diff: f64, T: f64, K: f64) -> f64 {
+    // a physical system tends to the lowest energy state possible
+
     if E_diff < 0.0 {
+        // if the `E_diff` is negative, the flip is entirely probable
+
         1.0
     } else {
+        // if the `E_diff` is positive, the higher the temperature, the higher
+        // the probability of the flip, and the greater the `E_diff`,
+        // the lower the probability
+
         std::f64::consts::E.powf(-E_diff / (K * T))
     }
 }
