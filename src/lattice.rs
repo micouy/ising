@@ -106,10 +106,11 @@ impl Lattice {
         let (i_1, j_1) = self.roll_index((i, j), -1);
         let (i_2, j_2) = self.roll_index((i, j), 1);
 
-        [(i_1, j), (i_2, j), (i, j_1), (i, j_2)]
-            .iter()
-            .map(|ix| self.inner[*ix])
-            .sum()
+        self.inner[(i, j)]
+            * [(i_1, j), (i_2, j), (i, j_1), (i, j_2)]
+                .iter()
+                .map(|ix| self.inner[*ix])
+                .sum::<i32>()
     }
 
     /// Returns the product of the `(ith, jth)` spin and the sum of two of its
@@ -119,7 +120,11 @@ impl Lattice {
 
         let (i_r, j_r) = self.roll_index((i, j), 1);
 
-        [(i_r, j), (i, j_r)].iter().map(|ix| self.inner[*ix]).sum()
+        self.inner[(i, j)]
+            * [(i_r, j), (i, j_r)]
+                .iter()
+                .map(|ix| self.inner[*ix])
+                .sum::<i32>()
     }
 
     /// Returns the difference of energy that would be caused by
@@ -136,8 +141,8 @@ impl Lattice {
     ///
     /// E_2 - E_1 =
     ///  = ((-J) * (-s) * (a + b + c + d)) - ((-J) * s * (a + b + c + d)) =
-    ///  = -J * (a + b + c + d) * ((-s) - s) =
-    ///  = -2 * -J * (a + b + c + d) * s =
+    ///  = -J * ((-s) - s) * (a + b + c + d) =
+    ///  = -J * -2 * s * (a + b + c + d) =
     ///  = 2 * J * s * (a + b + c + d)
     /// ```
     ///
@@ -158,10 +163,12 @@ impl Lattice {
 
     /// Returns the energy of the lattice.
     pub fn calc_E(&self, J: f64) -> f64 {
-        self.inner
-            .indexed_iter()
-            .map(|(ix, _)| -J * f64::from(self.spin_times_two_neighbors(ix)))
-            .sum()
+        -J * f64::from(
+            self.inner
+                .indexed_iter()
+                .map(|(ix, _)| self.spin_times_two_neighbors(ix))
+                .sum::<i32>(),
+        )
     }
 
     /// Returns the magnetization of the lattice. The magnetization is
@@ -188,6 +195,28 @@ impl Lattice {
             self.rng.gen_range(0, self.size) as usize,
             self.rng.gen_range(0, self.size) as usize,
         )
+    }
+
+    /// sraj sie
+    pub fn display(&self) {
+        let image = self
+            .inner
+            .genrows()
+            .into_iter()
+            .map(|row| {
+                row.into_iter()
+                    .map(|cell| match cell {
+                        -1 => " .",
+                        1 => "##",
+                        _ => unreachable!(),
+                    })
+                    .collect::<Vec<&str>>()
+                    .join("")
+            })
+            .collect::<Vec<String>>()
+            .join("\n");
+
+        println!("{}", image);
     }
 }
 
@@ -242,13 +271,15 @@ mod test {
 
     #[test]
     fn test_caluclate_E() {
-        let array = Array::from_shape_vec((2, 2), vec![-1, -1, 1, 1]).unwrap();
+        let array =
+            Array::from_shape_vec((3, 3), vec![-1, -1, -1, 1, 1, -1, 1, 1, -1])
+                .unwrap();
         let lattice = Lattice::from_array(array);
         let J = 1.0;
 
         let E = lattice.calc_E(J);
 
-        assert_eq!(E, 0.0);
+        assert_eq!(E, -2.0);
     }
 
     #[test]
@@ -263,17 +294,20 @@ mod test {
 
     #[test]
     fn test_flip_spin() {
-        let array = Array::from_shape_vec((2, 2), vec![-1, -1, -1, 1]).unwrap();
+        let array = Array::from_shape_vec(
+            (3, 3),
+            vec![-1, -1, -1, -1, 1, 1, -1, -1, 1],
+        )
+        .unwrap();
         let mut lattice = Lattice::from_array(array);
         let J = 1.0;
 
-        let E_diff = lattice.calc_E_diff((1, 1), J);
         let E_1 = lattice.calc_E(J);
 
         lattice.flip_spin((1, 1));
 
         let E_2 = lattice.calc_E(J);
 
-        assert!(float_error(E_2 - E_1, E_diff) < 0.01);
+        assert!(float_error(E_2 - E_1, -4.0) < 0.01);
     }
 }
