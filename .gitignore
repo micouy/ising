@@ -2,3 +2,5 @@
 **/*.rs.bk
 **/Cargo.lock
 sketch.rs
+notepad.md
+**/.DS_Store
