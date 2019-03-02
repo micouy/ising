@@ -1,12 +1,3 @@
-simulation/.Python
-simulation/lib/
-simulation/etc/
-simulation/share/
-simulation/bin/
-simulation/include/
-simulation/pip-selfcheck.json
-simulation/pyvenv.cfg
-simulation/main.py
 notepad.md
 **/.DS_Store
 **/*.pyc
