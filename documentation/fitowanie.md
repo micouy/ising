@@ -57,6 +57,6 @@ Symulacja została przeprowadzona 16 razy - dla wszystkich par liczb `0.4`, `0.8
 
 ![J = 1, k = 1](https://github.com/micouy/ising/blob/master/charts/simulation-J=1-k=1.svg)
 ![J = 0.8, k = 1.2](https://github.com/micouy/ising/blob/master/charts/simulation-J=0.8-k=1.2.svg)
-![J = 0.8, k = 0.8](https://github.com/micouy/ising/blob/master/charts/simulation-J=0.8-k=0.8.svgg)
+![J = 0.8, k = 0.8](https://github.com/micouy/ising/blob/master/charts/simulation-J=0.8-k=0.8.svg)
 
 Pozostałe wykresy magnetyzacji można znaleźć [tutaj](https://docs.google.com/spreadsheets/d/1doEWrnUNG1x7ro2eZrDH0M4yujCCvIWKe5AvqXeMVAI/edit?usp=sharing).
