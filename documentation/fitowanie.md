@@ -52,26 +52,18 @@ przez najwyższą z tych wartości. Taki zabieg ma kilka zalet:
   nadać im wartości odpowiednio 1 oraz 0, a wszystkim pozostałym wartości pomiędzy.
 
 
-Wykresy poniżej przedstawiają natężenie oklasków od czasu. Zostały wybrane
-spośród wszystkich (dziewięciu) ze względu na największe podobieństwo do wykresów
-magnetyzacji modelu Isinga dla `J = 1` i `k = 1`. Dla wykresów w tym dokumencie
-`n = 40`, co odpowiada ilości wartości temperatury w symulacji.
+Wykresy poniżej przedstawiają natężenie oklasków od czasu na nagraniach oraz uśrednioną i znormalizowaną
+głośność oklasków ze wszystkich nagrań.
 
-![Chorzów 1](https://github.com/micouy/ising/blob/master/charts/chorzow-1.svg)
-![Chorzów 5](https://github.com/micouy/ising/blob/master/charts/chorzow-5.svg)
-![Chorzów 10](https://github.com/micouy/ising/blob/master/charts/chorzow-10.svg)
-![Chorzów 12](https://github.com/micouy/ising/blob/master/charts/chorzow-12.svg)
-
-Pozostałe wykresy natężenia oklasków można znaleźć [tutaj](https://docs.google.com/spreadsheets/d/1Xhf7dJrlBedGPSxnQW9vLhacw0Nkq-SSAyWvmPWIYgg/edit?usp=sharing).
+![Oklaski](https://github.com/micouy/ising/blob/master/charts/recordings/recordings.svg)
 
 
-## Symulacja modelu Isinga dla różnych wartości stałych J oraz k
+## Symulacja modelu Isinga dla różnych wartości stałych `J` oraz `h`
 
-Symulacja została przeprowadzona 16 razy - dla wszystkich par liczb `0.4`, `0.8`,
-`1.2` oraz `1.6`. Wybrane przykłady:
+Wykresy poniżej przedstawiają wartość magnetyzacji w danej temperaturze. Wartości `h` serii
+są podane w legendach wykresów.
 
-![J = 1, k = 1](https://github.com/micouy/ising/blob/master/charts/simulation-J=1-k=1.svg)
-![J = 0.8, k = 1.2](https://github.com/micouy/ising/blob/master/charts/simulation-J=0.8-k=1.2.svg)
-![J = 0.8, k = 0.8](https://github.com/micouy/ising/blob/master/charts/simulation-J=0.8-k=0.8.svg)
+![Symulacja](https://github.com/micouy/ising/blob/master/charts/simulation/results.svg)
 
-Pozostałe wykresy magnetyzacji można znaleźć [tutaj](https://docs.google.com/spreadsheets/d/1doEWrnUNG1x7ro2eZrDH0M4yujCCvIWKe5AvqXeMVAI/edit?usp=sharing).
+
+Pozostałe wyniki można zobaczyć [tutaj](https://docs.google.com/spreadsheets/d/1doEWrnUNG1x7ro2eZrDH0M4yujCCvIWKe5AvqXeMVAI/edit?usp=sharing).
